@@ -1,120 +1,39 @@
 #pragma once
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
 
-class Camera
-{
-    float pitch = 0.0f;
-    float yaw = -90.0f;
-    
-    
+class Camera {
+    float pitch = -20.0f, yaw = -90.0f;
 public:
-    glm::vec3 Pos;
-    glm::vec3 Front;
-    glm::vec3 Up;
-    glm::mat4 view;
+    glm::vec3 Pos, Front, Up;
     glm::mat4 proj;
-    glm::mat4 model;
-    float WalkSpeed = 0.5f;
-    float RotSpeed = 2.0f;
 
-    Camera()
-    {
-        Reset();
-    }
-    
-    void W()
-    {
-        Pos += WalkSpeed * Front;
-    }
-    
-    void S()
-    {
-        Pos -= WalkSpeed * Front;
-    }
-    
-    void A()
-    {
-        Pos -= glm::normalize(glm::cross(Front, Up)) * WalkSpeed;
-    }
-    
-    void D()
-    {
-        Pos += glm::normalize(glm::cross(Front, Up)) * WalkSpeed;
+    Camera() { Reset(); }
+
+    void Move(float dir_forward, float dir_right) {
+        float speed = 0.8f;
+        Pos += Front * dir_forward * speed;
+        Pos += glm::normalize(glm::cross(Front, Up)) * dir_right * speed;
     }
 
+    void Rotate(float p_offset, float y_offset) {
+        float sensitivity = 1.5f;
+        pitch += p_offset * sensitivity;
+        yaw += y_offset * sensitivity;
+        if (pitch > 89.0f) pitch = 89.0f;
+        if (pitch < -89.0f) pitch = -89.0f;
 
-    void Update()
-    {
-        glm::vec3 newFront;
-        newFront.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-        newFront.y = sin(glm::radians(pitch));
-        newFront.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-        Front = glm::normalize(newFront);
-    }
-
-    void YawPlus()
-    {
-        yaw += RotSpeed;
-        Update();
-    }
-    
-    void YawMinus()
-    {
-        yaw -= RotSpeed;
-        Update();
+        glm::vec3 direction;
+        direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+        direction.y = sin(glm::radians(pitch));
+        direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+        Front = glm::normalize(direction);
     }
 
-    void PitchPlus()
-    {
-        pitch += RotSpeed;
-        Update();
-    }
-    
-    void PitchMinus()
-    {
-        pitch -= RotSpeed;
-        Update();
+    void Reset() {
+        Pos = {0, 60, 150}; Front = {0, -0.4f, -1.0f}; Up = {0, 1, 0};
+        proj = glm::perspective(glm::radians(45.0f), 1200.0f/800.0f, 0.1f, 2000.0f);
     }
 
-    void Perspective()
-    {
-        proj = glm::perspective(45.0f, 1.0f, 0.1f, 500.0f); 
-    }
-
-
-    void Reset()
-    { 
-        Pos = glm::vec3(0.0f, 0.0f, 3.0f);
-        Front = glm::vec3(0.0f, 0.0f, -1.0f);
-        Up = glm::vec3(0.0f, 1.0f, 0.0f);
-        view = glm::lookAt(Pos, Pos + Front, Up);
-        proj = glm::perspective(45.0f, 1.0f, 0.1f, 500.0f);
-        model = glm::mat4(1.0f);
-        yaw = -90.0f;
-        pitch = 0.0f;
-    }
-    
-    glm::mat4 MVP()
-    {
-        view = glm::lookAt(Pos, Pos + Front, Up);
-        return proj * view * model;
-    }
-
-    glm::mat4 Model()
-    {
-        return model;
-    }
-    
-    glm::mat4 View()
-    {
-        view = glm::lookAt(Pos, Pos + Front, Up);
-        return view;
-    }
-    
-    glm::mat4 Proj()
-    {
-        return proj;
-    }
+    glm::mat4 GetView() { return glm::lookAt(Pos, Pos + Front, Up); }
 };
